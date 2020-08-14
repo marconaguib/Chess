@@ -1,0 +1,36 @@
+# if mode=='professional':
+#     r = robjects.r
+#     numpy2ri.activate()
+#     pandas2ri.activate()
+#     state=self.board()
+#     f = open('state.csv', 'w')
+#     with f:
+#         writer = csv.writer(f)
+#         writer.writerow(state)
+#     f.close()
+#     r.source("C:\\Users\\Nicolas Martin\\chess\\predictor.R")
+#     f = open('response.csv', 'r')
+#     liste =f.readline().replace('"','').split(',')
+#     f.close()
+#     nx,ny = (7 - columns.index(liste[1])//8,columns.index(liste[1])%8)
+#     pieces_possibles=[]
+#     for x in range(8):
+#         for y in range(8):
+#             if (abs(self.piece_occupante2(x,y))==int(liste[0])):
+#                 cette_piece = piece_occupante(self.pieces[16*self.white:16*(self.white+1)],x,y)
+#                 if self.canmove2(cette_piece,nx,ny)[0] and cette_piece!= -1:
+#                     pieces_possibles.append(cette_piece)
+#     if (len(pieces_possibles)==1):
+#         assert(newgame.move(pieces_possibles[0],nx,ny))
+#         return(pieces_possibles[0],nx,ny)
+#     elif(len(pieces_possibles)>1):
+#         score=-np.Inf
+#         for p in pieces_possibles:
+#             ce_score=self.scoreklayer(p,nx,ny,2)
+#             if ce_score>score or (ce_score==score and randint(0,8)==4):
+#                  score,p_dec=ce_score,p
+#         assert(newgame.move(p_dec,nx,ny))
+#         return(p_dec,nx,ny)
+#     else:
+#         #print("model failed.")
+#         return(self.makeamove('amateur'))

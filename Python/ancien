@@ -1,0 +1,23 @@
+moves=[]
+for i,proba_cond in enumerate(proba):
+    if i==0 or i==11:
+        for j,proba_finale in enumerate(proba_cond * x for x in model[6].predict_proba([state])[0]):
+            moves.append(('6',j+1,proba_finale))
+    # elif i==1 or i==10:
+    #     for j,proba_finale in enumerate(proba_cond * x for x in model[5].predict_proba([state])[0]):
+    #         moves.append(('5',columns[j],proba_finale))
+    elif i==2 or i==9:
+        for j,proba_finale in enumerate(proba_cond * x for x in model[4].predict_proba([state])[0]):
+            moves.append(('4',columns[j],proba_finale))
+    # elif i==3 or i==8:
+    #     for j,proba_finale in enumerate(proba_cond * x for x in model[3].predict_proba([state])[0]):
+    #         moves.append(('3',columns[j],proba_finale))
+    # elif i==4 or i==7:
+    #     for j,proba_finale in enumerate(proba_cond * x for x in model[2].predict_proba([state])[0]):
+    #         moves.append(('2',columns[j],proba_finale))
+    # elif i==5 or i==6:
+    #     for j,proba_finale in enumerate(proba_cond * x for x in model[1].predict_proba([state])[0]):
+    #         moves.append(('1',columns[j],proba_finale))
+moves.sort(key = operator.itemgetter(2))
+for i in moves:
+    print(i)

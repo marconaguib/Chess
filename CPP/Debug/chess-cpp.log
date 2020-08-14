@@ -1,0 +1,4 @@
+﻿  Chess.cpp
+C:\Users\Nicolas Martin\chesscpp\Chess.cpp(5,10): fatal error C1083: Impossible d'ouvrir le fichier include : 'boost/range/combine.hpp' : No such file or directory
+  Jeu.cpp
+  Génération de code en cours...
