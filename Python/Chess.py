@@ -1,5 +1,3 @@
-import rpy2.robjects as robjects
-from rpy2.robjects import numpy2ri,pandas2ri
 from matplotlib.widgets import Button
 import matplotlib.pyplot as plt
 import numpy as np
@@ -37,7 +35,7 @@ class Piece():
             self.numtype= -1*type2num[type]
     def afficher(self):
         if(not self.pioch):
-            a= plt.imread('C:\\Users\\Nicolas Martin\\chesspy\\icons\\{}_{}.png'.format(self.coul,self.type))
+            a= plt.imread('icons\\{}_{}.png'.format(self.coul,self.type))
             plt.imshow(a,extent=(self.y-0.5,self.y+0.5,self.x-0.5,self.x+0.5))
     def move(self,nx,ny):
         self.x=nx
@@ -369,7 +367,7 @@ class Game():
 
     def afficher(self,onclick,fig,ax):
         thismanager = plt.get_current_fig_manager()
-        thismanager.window.wm_iconbitmap("C:\\Users\\Nicolas Martin\\chesspy\\icons\\unnamed.ico")
+        thismanager.window.wm_iconbitmap("icons\\unnamed.ico")
         thismanager.window.title("Chess")
         check=self.checkcheck2()
         mate=self.checkmate()
@@ -452,7 +450,7 @@ class Game():
             start = time.time()
             for p,nx,ny in self.get_all_reasonable_moves():
                 if self.canmove2(p,nx,ny)[0]:
-                    ce_score=self.scoreklayer(p,nx,ny,3)
+                    ce_score=self.scoreklayer(p,nx,ny,2)
                     if ce_score>score or (ce_score==score and randint(0,8)==4):
                          score=ce_score
                          p_dec,nx_dec,ny_dec=p,nx,ny
