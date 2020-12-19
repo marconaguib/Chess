@@ -1,12 +1,5 @@
-from matplotlib.widgets import Button
-import matplotlib.pyplot as plt
 import numpy as np
-import operator
-import time
-import csv
 from random import randint
-
-N=0
 
 lettres=['A','B','C','D','E','F','G','H']
 dic_lettres={'A':1,'B':2,'C':3,'D':4,'E':5,'F':6,'G':7,'H':8}
@@ -33,10 +26,6 @@ class Piece():
             self.numtype= type2num[type]
         else:
             self.numtype= -1*type2num[type]
-    def afficher(self):
-        if(not self.pioch):
-            a= plt.imread('icons\\{}_{}.png'.format(self.coul,self.type))
-            plt.imshow(a,extent=(self.y-0.5,self.y+0.5,self.x-0.5,self.x+0.5))
     def move(self,nx,ny):
         self.x=nx
         self.y=ny
@@ -93,7 +82,7 @@ class Game():
                 else:
                     ligne=6
                 pieces.append(Piece('P',c,ligne,i))
-        self.white = 0
+        self.white = 1
         self.pieces=pieces
         self.cases=[[1,2,3,4,5,3,2,1],[6]*8,[0]*8,[0]*8,[0]*8,[0]*8,[-6]*8,[-1,-2,-3,-4,-5,-3,-2,-1]]
         #marco
@@ -149,7 +138,7 @@ class Game():
             moves.extend(self.get_reasonable_moves(p))
         return moves
 
-    def checkcheck2(self):
+    def checkcheck(self):
         mes_pieces=self.pieces[16*self.white:16*(self.white+1)]
         x,y = mes_pieces[3].x,mes_pieces[3].y
         lui=(-1)**(1-self.white)
@@ -190,7 +179,7 @@ class Game():
         self.pieces[pp].depromouvoir()
         self.cases[x][y]=self.pieces[pp].numtype
 
-    def canmove2(self,p,nx,ny):
+    def canmove(self,p,nx,ny):
         lui=(-1)**(1-self.white)
         ind_p=-1
         if nx<0 or nx>7 or ny<0 or ny>7:
@@ -272,7 +261,7 @@ class Game():
         self.cases[nx][ny]=self.pieces[self.white*16+p%16].numtype
         self.cases[x][y]=0
         seraitcheck=0
-        if(self.checkcheck2()):
+        if(self.checkcheck()):
             seraitcheck=1
         self.pieces[self.white*16+p%16].move(x,y)
         self.cases[nx][ny]=0
@@ -289,12 +278,12 @@ class Game():
 
     def checkmate(self):
         for (p,nx,ny) in self.get_all_reasonable_moves():
-            if(self.canmove2(p,nx,ny)[0]):
+            if(self.canmove(p,nx,ny)[0]):
                 return False
         return True
 
     def move(self,p,nx,ny):
-        camarche,ind_p,pp = self.canmove2(p,nx,ny)
+        camarche,ind_p,pp = self.canmove(p,nx,ny)
         if camarche:
             x,y=self.pieces[self.white*16+p%16].x,self.pieces[self.white*16+p%16].y
             self.pieces[self.white*16+p%16].move(nx,ny)
@@ -310,8 +299,7 @@ class Game():
             return False
 
     def scoreklayer(self,p1,nx1,ny1,k):
-        global N
-        can,ind_p,pp=self.canmove2(p1,nx1,ny1)
+        can,ind_p,pp=self.canmove(p1,nx1,ny1)
 
         piece=self.pieces[self.white*16+p1%16]
         type,x,y,coul=piece.type,piece.x,piece.y,piece.coul
@@ -327,7 +315,7 @@ class Game():
 
         #switch
         assert(self.move(p1,nx1,ny1))
-        check = self.checkcheck2()
+        check = self.checkcheck()
         mate=self.checkmate()
         if check:
             score+=5
@@ -335,15 +323,12 @@ class Game():
             score+=10**10
         score*=k
 
-        if k==1:
-            N+=1
-
         if k!=1 and not mate:
             his_best_move=(-1,-1,-1)
             his_best_score=-np.Inf
             entered=False
             for(p2,nx2,ny2) in self.get_all_reasonable_moves():
-                if self.canmove2(p2,nx2,ny2)[0]:
+                if self.canmove(p2,nx2,ny2)[0]:
                     entered=True
                     ce_score=self.scoreklayer(p2,nx2,ny2,k-1)
                     if ce_score > his_best_score:
@@ -365,126 +350,41 @@ class Game():
         #switch back
         return score
 
-    def afficher(self,onclick,fig,ax):
-        thismanager = plt.get_current_fig_manager()
-        thismanager.window.wm_iconbitmap("icons\\unnamed.ico")
-        thismanager.window.title("Chess")
-        check=self.checkcheck2()
-        mate=self.checkmate()
-        self.piecsel=0
-        col = np.zeros((8,8))
-        col[1::2,0::2]=1
-        col[0::2,1::2]=1
 
-        ax.set_aspect('equal')
-        ax.set_xlim(-0.5, 7.5)
-        ax.set_ylim(-0.5, 7.5)
-        names=[]
-        for i in range(8):
-            names.append([lettres[i]]*8)
-            for j in range(8):
-             names[i][j]+=str(j+1)
-        plt.imshow(col)
-        for p in self.pieces:
-            p.afficher()
-        for i in range(8):
-            for j in range(8):
-                plt.text(i,j,names[i][j],color='black' if (i+j)%2 else 'white',alpha=0.2)
-        plt.title(("White, " if self.white else "Black, ")+("Check" if check else "")+("mate!" if mate else ""))
-        cid = fig.canvas.mpl_connect('button_press_event', onclick)
-        if mate:
-            if check:
-                print(("Black" if self.white else "White")+" wins")
+    def makeamove(self,level):
+        if self.checkmate():
+            if self.checkcheck():
+                if self.white :
+                    print("Checkmate, black wins.")
+                else:
+                    print("Checkmate, white wins.")
+                return False
+            if self.white :
+                print("Draw, white cannot move.")
             else:
-                print("Draw!")
-        axquit = plt.axes([0.85, 0.05, 0.1, 0.075])
-        bquit = Button(axquit, 'Quit')
-        axres = plt.axes([0.85, 0.15, 0.1, 0.075])
-        bquit = Button(axres, 'Restart')
-        plt.show()
-        fig.canvas.mpl_disconnect(cid)
+                print("Draw, black cannot move.")
+            return False
+        score=-np.Inf
+        p_dec,nx_dec,ny_dec=-1,-1,-1
+        for p,nx,ny in self.get_all_reasonable_moves():
+            if self.canmove(p,nx,ny)[0]:
+                ce_score=self.scoreklayer(p,nx,ny,level)
+                if ce_score>score or (ce_score==score and randint(0,8)==4):
+                     score=ce_score
+                     p_dec,nx_dec,ny_dec=p,nx,ny
+        assert(self.move(p_dec,nx_dec,ny_dec))
+        assert(score>-np.Inf)
+        return(True)
 
-    def letmeplay(self):
-        fig,ax = plt.subplots(1)
-        quitter=[]
-        rejouer=[]
-        def onclick(event):
-            POS=(round(event.ydata), round(event.xdata))
-            if piece_occupante(self.pieces[16*self.white:16*(self.white+1)],POS[0],POS[1])!=-1:
-                    self.selection=piece_occupante(self.pieces,POS[0],POS[1])
-                    self.piecsel=1
-                    moves=self.get_reasonable_moves(self.selection)
-            if self.piecsel:
-                if(self.move(self.selection,int(POS[0]),int(POS[1]))):
-                    plt.close()
-                    self.piecesel=0
-            if event.x>546 and event.x<608 and event.y >24 and event.y<58:
-                quitter.append(1)
-                plt.close()
-            if event.x>546 and event.x<608 and event.y >73 and event.y<105:
-                rejouer.append(1)
-                plt.close()
-        self.afficher(onclick,fig,ax)
-        return (quitter,rejouer)
-
-    def makeamove(self,mode):
-        if self.checkmate():
-            self.letmeplay()
-            return
-        if mode=='random':
-            start = time.time()
-            score=-np.Inf
-            p_dec,nx_dec,ny_dec=-1,-1,-1
-            for i in range(10000):
-                p,nx,ny=randint(0,15),randint(0,7),randint(0,7)
-                if self.score(p,nx,ny) > score:
-                    score= self.score(p,nx,ny)
-                    p_dec,nx_dec,ny_dec=p,nx,ny
-            assert(self.move(p_dec,nx_dec,ny_dec))
-            assert(score>-np.Inf)
-            print(round(time.time() - start,3))
-            return((p_dec,nx_dec,ny_dec))
-        if mode=='amateur':
-            score=-np.Inf
-            p_dec,nx_dec,ny_dec=-1,-1,-1
-            start = time.time()
-            for p,nx,ny in self.get_all_reasonable_moves():
-                if self.canmove2(p,nx,ny)[0]:
-                    ce_score=self.scoreklayer(p,nx,ny,2)
-                    if ce_score>score or (ce_score==score and randint(0,8)==4):
-                         score=ce_score
-                         p_dec,nx_dec,ny_dec=p,nx,ny
-            assert(self.move(p_dec,nx_dec,ny_dec))
-            assert(score>-np.Inf)
-            return(p_dec,nx_dec,ny_dec)
-
-
-    def play(self,mode):
-        while not self.checkmate():
-            (quitter,rejouer)=self.letmeplay()
-            if len(quitter)!=0:
-                return False
-            elif len(rejouer)!=0:
-                self.__init__()
-            if mode!='multi' and not self.checkmate():
-                self.makeamove(mode)
-                continue
-        if self.checkmate():
-            (quitter,rejouer)=self.letmeplay()
-            if len(quitter)!=0:
-                return False
-            elif len(rejouer)!=0:
-                return True
-
-    def youplay(self):
-        while not self.checkmate():
-            print("black",self.makeamove('amateur'))
-            if self.checkmate():
-                break
-            print("white",self.makeamove('professional'))
-        self.letmeplay()
-
-replay=True
-while replay:
-    newgame=Game()
-    replay= newgame.play('amateur')
+newgame=Game()
+still_can_play = True
+while still_can_play:
+    print(str(np.asarray(newgame.cases)).replace('0','.').replace('-1',' t').replace('-2',' c').replace('-3',' f').replace('-4',' r').replace('-5',' d').replace('-6',' p').replace('1','T').replace('2','C').replace('3','F').replace('4','R').replace('5','D').replace('6','P'))
+    print('\n')
+    still_can_play = newgame.makeamove(3)
+    if not still_can_play:
+        break
+    print(str(np.asarray(newgame.cases)).replace('0','.').replace('-1',' t').replace('-2',' c').replace('-3',' f').replace('-4',' r').replace('-5',' d').replace('-6',' p').replace('1','T').replace('2','C').replace('3','F').replace('4','R').replace('5','D').replace('6','P'))
+    print('\n')
+    still_can_play = newgame.makeamove(1)
+    
