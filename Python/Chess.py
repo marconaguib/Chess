@@ -381,7 +381,7 @@ still_can_play = True
 while still_can_play:
     print(str(np.asarray(newgame.cases)).replace('0','.').replace('-1',' t').replace('-2',' c').replace('-3',' f').replace('-4',' r').replace('-5',' d').replace('-6',' p').replace('1','T').replace('2','C').replace('3','F').replace('4','R').replace('5','D').replace('6','P'))
     print('\n')
-    still_can_play = newgame.makeamove(3)
+    still_can_play = newgame.makeamove(2)
     if not still_can_play:
         break
     print(str(np.asarray(newgame.cases)).replace('0','.').replace('-1',' t').replace('-2',' c').replace('-3',' f').replace('-4',' r').replace('-5',' d').replace('-6',' p').replace('1','T').replace('2','C').replace('3','F').replace('4','R').replace('5','D').replace('6','P'))
