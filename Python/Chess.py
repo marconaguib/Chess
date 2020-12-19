@@ -26,6 +26,7 @@ class Piece():
             self.numtype= type2num[type]
         else:
             self.numtype= -1*type2num[type]
+        print(type,coul,x,y)
     def move(self,nx,ny):
         self.x=nx
         self.y=ny
@@ -53,38 +54,39 @@ def piece_occupante(liste,nx,ny):
             return(p)
     return(-1)
 
-class Game():
-    def piece_occupante2(self,nx,ny):
-        if nx>=0 and nx<=7 and ny>=0 and ny<=7:
-            return(self.cases[nx][ny])
-        else:
-            return 0
+class Game():        
     def __init__(self):
-        self.selection=-1
-        self.pieces=[]
+        self.cases=[[1,2,3,4,5,3,2,1],[6]*8,[0]*8,[0]*8,[0]*8,[0]*8,[-6]*8,[-1,-2,-3,-4,-5,-3,-2,-1]]
         pieces=[]
-        for c in ['N','B']:
-            if c=='N':
-                ligne=0
-            else:
-                ligne=7
-            pieces.append(Piece('T',c,ligne,0))
-            pieces.append(Piece('C',c,ligne,1))
-            pieces.append(Piece('F',c,ligne,2))
-            pieces.append(Piece('R',c,ligne,3))
-            pieces.append(Piece('D',c,ligne,4))
-            pieces.append(Piece('F',c,ligne,5))
-            pieces.append(Piece('C',c,ligne,6))
-            pieces.append(Piece('T',c,ligne,7))
-            for i in range(8):
-                if c=='N':
-                    ligne=1
-                else:
-                    ligne=6
-                pieces.append(Piece('P',c,ligne,i))
+        c='N'
+        ligne=0
+        pieces.append(Piece('T',c,ligne,0))
+        pieces.append(Piece('C',c,ligne,1))
+        pieces.append(Piece('F',c,ligne,2))
+        pieces.append(Piece('R',c,ligne,3))
+        pieces.append(Piece('D',c,ligne,4))
+        pieces.append(Piece('F',c,ligne,5))
+        pieces.append(Piece('C',c,ligne,6))
+        pieces.append(Piece('T',c,ligne,7))
+        ligne=1
+        for i in range(8):
+            pieces.append(Piece('P',c,ligne,i))
+        c='K'
+        ligne=7
+        pieces.append(Piece('T',c,ligne,0))
+        pieces.append(Piece('C',c,ligne,1))
+        pieces.append(Piece('F',c,ligne,2))
+        pieces.append(Piece('R',c,ligne,3))
+        pieces.append(Piece('D',c,ligne,4))
+        pieces.append(Piece('F',c,ligne,5))
+        pieces.append(Piece('C',c,ligne,6))
+        pieces.append(Piece('T',c,ligne,7))
+        ligne=6
+        for i in range(8):
+            pieces.append(Piece('P',c,ligne,i))
+        
         self.white = 1
         self.pieces=pieces
-        self.cases=[[1,2,3,4,5,3,2,1],[6]*8,[0]*8,[0]*8,[0]*8,[0]*8,[-6]*8,[-1,-2,-3,-4,-5,-3,-2,-1]]
         #marco
         # for i in range(len(pieces)):
         #     if i!=3 and i!=4 and i!=0 and i!=19 and i!=17:
@@ -97,12 +99,15 @@ class Game():
     def swap(self):
         self.white = 1-self.white
 
-    def board(self):
-        res=[]
-        for i in np.flip(np.array(newgame.cases),0):
-            res.extend(i)
-        res.append((-1)**self.white)
-        return res
+    def print_board(self):
+        print(str(np.asarray(self.cases)).replace('0','.').replace('-1',' t').replace('-2',' c').replace('-3',' f').replace('-4',' r').replace('-5',' d').replace('-6',' p').replace('1','T').replace('2','C').replace('3','F').replace('4','R').replace('5','D').replace('6','P'))
+        print('\n')
+    
+    def piece_occupante2(self,nx,ny):
+        if nx>=0 and nx<=7 and ny>=0 and ny<=7:
+            return(self.cases[nx][ny])
+        else:
+            return 0
 
     def get_reasonable_moves(self,p):
         moves=[]
@@ -369,7 +374,7 @@ class Game():
         for p,nx,ny in self.get_all_reasonable_moves():
             if self.canmove(p,nx,ny)[0]:
                 ce_score=self.scoreklayer(p,nx,ny,level)
-                if ce_score>score or (ce_score==score and randint(0,8)==4):
+                if ce_score>score or (ce_score==score and randint(0,6)==0):
                      score=ce_score
                      p_dec,nx_dec,ny_dec=p,nx,ny
         assert(self.move(p_dec,nx_dec,ny_dec))
@@ -379,12 +384,10 @@ class Game():
 newgame=Game()
 still_can_play = True
 while still_can_play:
-    print(str(np.asarray(newgame.cases)).replace('0','.').replace('-1',' t').replace('-2',' c').replace('-3',' f').replace('-4',' r').replace('-5',' d').replace('-6',' p').replace('1','T').replace('2','C').replace('3','F').replace('4','R').replace('5','D').replace('6','P'))
-    print('\n')
+    newgame.print_board()
     still_can_play = newgame.makeamove(2)
     if not still_can_play:
         break
-    print(str(np.asarray(newgame.cases)).replace('0','.').replace('-1',' t').replace('-2',' c').replace('-3',' f').replace('-4',' r').replace('-5',' d').replace('-6',' p').replace('1','T').replace('2','C').replace('3','F').replace('4','R').replace('5','D').replace('6','P'))
-    print('\n')
+    newgame.print_board()
     still_can_play = newgame.makeamove(1)
     
