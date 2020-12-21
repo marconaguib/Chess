@@ -23,7 +23,6 @@ class Piece():
         self.type = type
         self.x=x
         self.y=y
-        self.pioch=0
         if coul=='N':
             self.numtype= type2num[type]
         else:
@@ -32,10 +31,6 @@ class Piece():
         self.x=nx
         self.y=ny
         self.nom_position = lettres[self.y]+str(self.x+1)
-    def piocher(self):
-        self.pioch=1
-    def depiocher(self):
-        self.pioch=0
     def promouvoir(self):
         self.type='D'
         if self.coul=='N':
@@ -49,13 +44,13 @@ class Piece():
         else:
             self.numtype=-6
 
-def piece_occupante(liste,nx,ny):
-    for p,i in enumerate(liste):
-        if i.pioch==0 and (i.x,i.y)==(nx,ny):
-            return(p)
-    return(-1)
-
 class Game():        
+    def piece_occupante(self,nx,ny):
+        for p,i in enumerate(self.pieces):
+            if self.cases[nx][ny]==i.numtype and (i.x,i.y)==(nx,ny):
+                return(p)
+        return(-1)
+        
     def __init__(self,cases=[[1,2,3,4,5,3,2,1],[6]*8,[0]*8,[0]*8,[0]*8,[0]*8,[-6]*8,[-1,-2,-3,-4,-5,-3,-2,-1]]):
         self.cases=cases
         self.pieces=[]
@@ -150,13 +145,6 @@ class Game():
                     break
         return False
 
-    def piocher_piece(self,ind_p):
-        self.pieces[ind_p].piocher()
-
-    def depiocher_piece(self,ind_p,nx,ny):
-        self.pieces[ind_p].depiocher()
-        self.cases[nx][ny]=self.pieces[ind_p].numtype
-
     def promouvoir_piece(self,pp,nx,ny):
         self.pieces[pp].promouvoir()
         self.cases[nx][ny]= 5 if self.pieces[pp].coul=='N' else -5
@@ -186,10 +174,9 @@ class Game():
                         return (False,-1,False)
                 else:
                     ### change pas
-                    ind_p=piece_occupante(self.pieces,nx,ny)
+                    ind_p=self.piece_occupante(nx,ny)
                     if ind_p==-1 or nx-x==2:
                         return (False,-1,False)
-                    self.piocher_piece(ind_p)
             else:
                 if nx>=x or abs(ny-y)>1 or (x-nx>2 and x==6) or (x-nx>1 and x<6):
                     return (False,-1,False)
@@ -199,10 +186,9 @@ class Game():
                     if (x-nx==2 and self.piece_occupante2(x-1,ny)!=0):
                         return (False,-1,False)
                 else:
-                    ind_p=piece_occupante(self.pieces,nx,ny)
+                    ind_p=self.piece_occupante(nx,ny)
                     if ind_p==-1 or x-nx==2:
                         return (False,-1,False)
-                    self.piocher_piece(ind_p)
         else:
             if type=='C':
                 if np.abs(nx-x)+np.abs(ny-y) != 3 or nx==x or ny==y:
@@ -239,9 +225,7 @@ class Game():
                     if self.piece_occupante2(i,j)!=0:
                         return (False,-1,False)
             #piocher
-            ind_p=piece_occupante(self.pieces,nx,ny)
-            if ind_p!=-1:
-                self.piocher_piece(ind_p)
+            ind_p=self.piece_occupante(nx,ny)
         self.cases[nx][ny]=self.cases[x][y]
         self.cases[x][y]=0
         seraitcheck=0
@@ -250,7 +234,7 @@ class Game():
         self.cases[x][y]=self.cases[nx][ny]
         self.cases[nx][ny]=0
         if ind_p != -1:
-            self.depiocher_piece(ind_p,nx,ny)
+            self.cases[nx][ny]=self.pieces[ind_p].numtype
         if seraitcheck:
             return (False,-1,False)
         pion_promu=False
@@ -268,10 +252,8 @@ class Game():
     def move(self,x,y,nx,ny):
         camarche,ind_p,pp = self.canmove(x,y,nx,ny)
         if camarche:
-            p=piece_occupante(self.pieces,x,y)
+            p=self.piece_occupante(x,y)
             self.pieces[p].move(nx,ny)
-            if ind_p !=-1:
-                self.piocher_piece(ind_p)
             self.cases[nx][ny]=self.cases[x][y]
             self.cases[x][y]=0
             if pp:
@@ -318,13 +300,13 @@ class Game():
             score-=his_best_score
         #undoing
         self.swap()
-        p1=piece_occupante(self.pieces,nx1,ny1)
+        p1=self.piece_occupante(nx1,ny1)
         piece=self.pieces[p1]
         self.pieces[p1].move(x,y)
         self.cases[nx1][ny1]=0
         self.cases[x][y]=self.pieces[p1].numtype
         if ind_p != -1:
-            self.depiocher_piece(ind_p,nx1,ny1)
+            self.cases[nx1][ny1]=self.pieces[ind_p].numtype
         if pp:
             self.depromouvoir_piece(p1,x,y)
         #switch back
@@ -358,11 +340,11 @@ class Game():
 
 cases=[[0,0,0,4,0,0,0,0],[0]*8,[0]*8,[0]*8,[0]*8,[0]*8,[0]*7+[-6],[0,0,0,-4,0,0,0,0]]
 # cases = [[0,0,0,4,0,0,-6,1],[0]*8,[0]*8,[5,0,0,0,0,0,0,0],[0]*8,[0]*8,[0]*8,[0,0,0,-4,0,0,0,0]]
-newgame=Game()
+newgame=Game(cases)
 still_can_play = True
 while still_can_play:
     newgame.print_board()
-    still_can_play = newgame.makeamove(2)
+    still_can_play = newgame.makeamove(3)
     if not still_can_play:
         break
     newgame.print_board()
