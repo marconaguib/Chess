@@ -155,57 +155,57 @@ class Game():
 
     def canmove(self,x,y,nx,ny):
         if (self.cases[x][y]==0):
-            return (False,-1,False)
+            return (False,0,False)
         type,coul=num2type[abs(self.cases[x][y])-1],'N' if self.cases[x][y]>0 else 'B'
         lui=(-1)**(1-self.white)
-        ind_p=-1
+        type_pioche=0
         if nx<0 or nx>7 or ny<0 or ny>7:
-            return (False,-1,False)
+            return (False,0,False)
         if (self.white and self.piece_occupante2(nx,ny)<0) or (not self.white and self.piece_occupante2(nx,ny)>0):
-            return (False,-1,False)
+            return (False,0,False)
         if type=='P':
             if coul=='N':
                 if nx<=x or abs(ny-y)>1 or (nx-x>2 and x==1) or (nx-x>1 and x>1):
-                    return (False,-1,False)
+                    return (False,0,False)
                 if ny==y:
                     if self.piece_occupante2(nx,ny)<0:
-                        return (False,-1,False)
+                        return (False,0,False)
                     if (nx-x==2 and self.piece_occupante2(x+1,ny)!=0):
-                        return (False,-1,False)
+                        return (False,0,False)
                 else:
                     ### change pas
-                    ind_p=self.piece_occupante(nx,ny)
-                    if ind_p==-1 or nx-x==2:
-                        return (False,-1,False)
+                    type_pioche=self.piece_occupante2(nx,ny)
+                    if type_pioche==0 or nx-x==2:
+                        return (False,0,False)
             else:
                 if nx>=x or abs(ny-y)>1 or (x-nx>2 and x==6) or (x-nx>1 and x<6):
-                    return (False,-1,False)
+                    return (False,0,False)
                 if ny==y :
                     if self.piece_occupante2(nx,ny)>0:
-                        return (False,-1,False)
+                        return (False,0,False)
                     if (x-nx==2 and self.piece_occupante2(x-1,ny)!=0):
-                        return (False,-1,False)
+                        return (False,0,False)
                 else:
-                    ind_p=self.piece_occupante(nx,ny)
-                    if ind_p==-1 or x-nx==2:
-                        return (False,-1,False)
+                    type_pioche=self.piece_occupante2(nx,ny)
+                    if type_pioche==0 or x-nx==2:
+                        return (False,0,False)
         else:
             if type=='C':
                 if np.abs(nx-x)+np.abs(ny-y) != 3 or nx==x or ny==y:
-                    return (False,-1,False)
+                    return (False,0,False)
             else:
                 if type=='R':
                     if (np.abs(nx-x)>1 or np.abs(ny-y)>1):
-                        return (False,-1,False)
+                        return (False,0,False)
                 if type=='F':
                     if abs(nx - x) != abs(ny -y):
-                        return (False,-1,False)
+                        return (False,0,False)
                 if type=='T':
                     if nx!=x and ny!=y:
-                        return (False,-1,False)
+                        return (False,0,False)
                 if type=='D':
                     if (abs(nx - x) != abs(ny -y)) and nx!=x and ny!=y:
-                        return (False,-1,False)
+                        return (False,0,False)
                 #rien sur le chemin
                 if nx>x:
                     range_x=range(x,nx,1)
@@ -223,9 +223,9 @@ class Game():
                     if((i,j)==(x,y)):
                         continue
                     if self.piece_occupante2(i,j)!=0:
-                        return (False,-1,False)
+                        return (False,0,False)
             #piocher
-            ind_p=self.piece_occupante(nx,ny)
+            type_pioche=self.piece_occupante2(nx,ny)
         self.cases[nx][ny]=self.cases[x][y]
         self.cases[x][y]=0
         seraitcheck=0
@@ -233,14 +233,14 @@ class Game():
             seraitcheck=1
         self.cases[x][y]=self.cases[nx][ny]
         self.cases[nx][ny]=0
-        if ind_p != -1:
-            self.cases[nx][ny]=self.pieces[ind_p].numtype
+        if type_pioche != 0:
+            self.cases[nx][ny]=type_pioche
         if seraitcheck:
-            return (False,-1,False)
+            return (False,0,False)
         pion_promu=False
         if type=='P' and (nx==7 or nx==0):
             pion_promu=True
-        return (True,ind_p,pion_promu)
+        return (True,type_pioche,pion_promu)
 
 
     def checkmate(self):
@@ -250,7 +250,7 @@ class Game():
         return True
 
     def move(self,x,y,nx,ny):
-        camarche,ind_p,pp = self.canmove(x,y,nx,ny)
+        camarche,type_pioche,pp = self.canmove(x,y,nx,ny)
         if camarche:
             p=self.piece_occupante(x,y)
             self.pieces[p].move(nx,ny)
@@ -264,7 +264,7 @@ class Game():
             return False
 
     def scoreklayer(self,x,y,nx1,ny1,k):
-        can,ind_p,pp=self.canmove(x,y,nx1,ny1)
+        can,type_pioche,pp=self.canmove(x,y,nx1,ny1)
         
         type,coul=num2type[abs(self.cases[x][y])-1],'N' if self.cases[x][y]>0 else 'B'
         score=0
@@ -272,10 +272,9 @@ class Game():
         if pp:
             score+=100
 
-        if ind_p != -1:
-            type_p=self.pieces[ind_p].type
-            dic_recompense={'P':10, 'C':40, 'F':35, 'T':50,'D':90}
-            score+= dic_recompense[type_p]
+        if type_pioche != 0:
+            dic_recompense={6:10, 2:40, 3:35, 1:50,5:90}
+            score+= dic_recompense[abs(type_pioche)]
 
         assert(self.move(x,y,nx1,ny1))
         check = self.checkcheck()
@@ -305,8 +304,8 @@ class Game():
         self.pieces[p1].move(x,y)
         self.cases[nx1][ny1]=0
         self.cases[x][y]=self.pieces[p1].numtype
-        if ind_p != -1:
-            self.cases[nx1][ny1]=self.pieces[ind_p].numtype
+        if type_pioche != 0:
+            self.cases[nx1][ny1]=type_pioche
         if pp:
             self.depromouvoir_piece(p1,x,y)
         #switch back
@@ -340,11 +339,11 @@ class Game():
 
 cases=[[0,0,0,4,0,0,0,0],[0]*8,[0]*8,[0]*8,[0]*8,[0]*8,[0]*7+[-6],[0,0,0,-4,0,0,0,0]]
 # cases = [[0,0,0,4,0,0,-6,1],[0]*8,[0]*8,[5,0,0,0,0,0,0,0],[0]*8,[0]*8,[0]*8,[0,0,0,-4,0,0,0,0]]
-newgame=Game(cases)
+newgame=Game()
 still_can_play = True
 while still_can_play:
     newgame.print_board()
-    still_can_play = newgame.makeamove(3)
+    still_can_play = newgame.makeamove(2)
     if not still_can_play:
         break
     newgame.print_board()
