@@ -80,7 +80,44 @@ class Game():
         else:
             return 0
 
-    def get_reasonable_moves(self,p):
+    def get_reasonable_moves(self,x,y):
+        moves=[]
+        p=piece_occupante(self.pieces,x,y)
+        type=num2type[abs(self.cases[x][y])-1]
+        #coul plutot que white
+        if type=='R':
+            if x>0:
+                moves.extend([(p,x-1,y-1),(p,x-1,y),(p,x-1,y+1)])
+            if x<7:
+                moves.extend([(p,x+1,y-1),(p,x+1,y),(p,x+1,y+1)])
+            moves.extend([(p,x,y-1),(p,x,y+1)])
+        elif type=='C':
+            moves.extend([(p,x-2,y-1),(p,x-1,y-2),(p,x-2,y+1),(p,x-1,y+2),(p,x+1,y-2),(p,x+2,y-1),(p,x+1,y+2),(p,x+2,y+1)])
+        elif type=='P':
+            w=self.white
+            moves.extend([(p,x+(-1)**w,y),(p,x+(-1)**w,y-1),(p,x+(-1)**w,y+1)])
+            if x==1 or x==6:
+                moves.append((p,x+2*(-1)**w,y))
+        if type=='F' or type=='D':
+            for mon_zip in [zip([p]*8,range(x+1,8),range(y+1,8)),zip([p]*8,range(x+1,8),range(y-1,-1,-1)),zip([p]*8,range(x-1,-1,-1),range(y+1,8)),zip([p]*8,range(x-1,-1,-1),range(y-1,-1,-1))]:
+                moves.extend(mon_zip)
+        if type=='T' or type=='D':
+            for mon_zip in [zip([p]*8,range(x-1,-1,-1),[y]*abs(x)),zip([p]*8,range(x+1,8),[y]*np.abs(8-x)),zip([p]*8,[x]*abs(y),range(y-1,-1,-1)),zip([p]*8,[x]*np.abs(8-y),range(y+1,8))]:
+                moves.extend(mon_zip)
+        return moves
+
+    def get_all_reasonable_moves(self):
+        moves=[]
+        for x in range(8):
+            for y in range(8):
+                piece=self.cases[x][y]
+                if piece==0:
+                    continue
+                if (piece<0) == (self.white) :
+                    moves.extend(self.get_reasonable_moves(x,y))
+        return moves
+
+    def get_reasonable_moves2(self,p):
         moves=[]
         piece=self.pieces[p]
         type,x,y,coul=piece.type,piece.x,piece.y,piece.coul
@@ -105,7 +142,7 @@ class Game():
                 moves.extend(mon_zip)
         return moves
 
-    def get_all_reasonable_moves(self):
+    def get_all_reasonable_moves2(self):
         moves=[]
         for p in range(len(self.pieces)):
             piece=self.pieces[p]
