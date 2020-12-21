@@ -20,47 +20,21 @@ columns=["a8","b8","c8","d8","e8","f8","g8","h8",
 class Piece():
     def __init__(self, type,coul,x,y):
         self.coul=coul
-        self.type = type
         self.x=x
         self.y=y
-        if coul=='N':
-            self.numtype= type2num[type]
-        else:
-            self.numtype= -1*type2num[type]
     def move(self,nx,ny):
         self.x=nx
         self.y=ny
-        self.nom_position = lettres[self.y]+str(self.x+1)
-    def promouvoir(self):
-        self.type='D'
-        if self.coul=='N':
-            self.numtype=5
-        else:
-            self.numtype=-5
-    def depromouvoir(self):
-        self.type='P'
-        if self.coul=='N':
-            self.numtype=6
-        else:
-            self.numtype=-6
-
+    
 class Game():        
-    def piece_occupante(self,nx,ny):
-        for p,i in enumerate(self.pieces):
-            if self.cases[nx][ny]==i.numtype and (i.x,i.y)==(nx,ny):
-                return(p)
-        return(-1)
-        
     def __init__(self,cases=[[1,2,3,4,5,3,2,1],[6]*8,[0]*8,[0]*8,[0]*8,[0]*8,[-6]*8,[-1,-2,-3,-4,-5,-3,-2,-1]]):
         self.cases=cases
-        self.pieces=[]
         for i in range(8):
             for j in range(8):
                 val = self.cases[i][j]
                 if val==0:
                     continue
                 c = 'B' if (val<0) else 'N'
-                self.pieces.append(Piece(num2type[abs(val)-1],c,i,j))
         self.white = 1
         
     def swap(self):
@@ -144,14 +118,6 @@ class Game():
                 elif self.piece_occupante2(cx,cy)!=0:
                     break
         return False
-
-    def promouvoir_piece(self,pp,nx,ny):
-        self.pieces[pp].promouvoir()
-        self.cases[nx][ny]= 5 if self.pieces[pp].coul=='N' else -5
-
-    def depromouvoir_piece(self,pp,x,y):
-        self.pieces[pp].depromouvoir()
-        self.cases[x][y]= 6 if self.pieces[pp].coul=='N' else -6
 
     def canmove(self,x,y,nx,ny):
         if (self.cases[x][y]==0):
@@ -252,12 +218,10 @@ class Game():
     def move(self,x,y,nx,ny):
         camarche,type_pioche,pp = self.canmove(x,y,nx,ny)
         if camarche:
-            p=self.piece_occupante(x,y)
-            self.pieces[p].move(nx,ny)
             self.cases[nx][ny]=self.cases[x][y]
             self.cases[x][y]=0
             if pp:
-                self.promouvoir_piece(p,nx,ny)
+                self.cases[nx][ny]= 5 if self.cases[nx][ny]==6 else -5
             self.swap()
             return True
         else:
@@ -299,15 +263,12 @@ class Game():
             score-=his_best_score
         #undoing
         self.swap()
-        p1=self.piece_occupante(nx1,ny1)
-        piece=self.pieces[p1]
-        self.pieces[p1].move(x,y)
+        self.cases[x][y]=self.cases[nx1][ny1]
         self.cases[nx1][ny1]=0
-        self.cases[x][y]=self.pieces[p1].numtype
         if type_pioche != 0:
             self.cases[nx1][ny1]=type_pioche
         if pp:
-            self.depromouvoir_piece(p1,x,y)
+            self.cases[x][y]= 6 if self.cases[x][y]==5 else -6
         #switch back
         return score
 
@@ -339,11 +300,11 @@ class Game():
 
 cases=[[0,0,0,4,0,0,0,0],[0]*8,[0]*8,[0]*8,[0]*8,[0]*8,[0]*7+[-6],[0,0,0,-4,0,0,0,0]]
 # cases = [[0,0,0,4,0,0,-6,1],[0]*8,[0]*8,[5,0,0,0,0,0,0,0],[0]*8,[0]*8,[0]*8,[0,0,0,-4,0,0,0,0]]
-newgame=Game()
+newgame=Game(cases)
 still_can_play = True
 while still_can_play:
     newgame.print_board()
-    still_can_play = newgame.makeamove(2)
+    still_can_play = newgame.makeamove(3)
     if not still_can_play:
         break
     newgame.print_board()
