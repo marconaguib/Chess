@@ -83,28 +83,26 @@ class Game():
 
     def get_reasonable_moves(self,x,y):
         moves=[]
-        p=piece_occupante(self.pieces,x,y)
         type=num2type[abs(self.cases[x][y])-1]
         type,coul=num2type[abs(self.cases[x][y])-1],'N' if self.cases[x][y]>0 else 'B'
-        #coul plutot que white
         if type=='R':
             if x>0:
-                moves.extend([(p,x-1,y-1),(p,x-1,y),(p,x-1,y+1)])
+                moves.extend([(x,y,x-1,y-1),(x,y,x-1,y),(x,y,x-1,y+1)])
             if x<7:
-                moves.extend([(p,x+1,y-1),(p,x+1,y),(p,x+1,y+1)])
-            moves.extend([(p,x,y-1),(p,x,y+1)])
+                moves.extend([(x,y,x+1,y-1),(x,y,x+1,y),(x,y,x+1,y+1)])
+            moves.extend([(x,y,x,y-1),(x,y,x,y+1)])
         elif type=='C':
-            moves.extend([(p,x-2,y-1),(p,x-1,y-2),(p,x-2,y+1),(p,x-1,y+2),(p,x+1,y-2),(p,x+2,y-1),(p,x+1,y+2),(p,x+2,y+1)])
+            moves.extend([(x,y,x-2,y-1),(x,y,x-1,y-2),(x,y,x-2,y+1),(x,y,x-1,y+2),(x,y,x+1,y-2),(x,y,x+2,y-1),(x,y,x+1,y+2),(x,y,x+2,y+1)])
         elif type=='P':
             w=1 if coul=='B' else 0
-            moves.extend([(p,x+(-1)**w,y),(p,x+(-1)**w,y-1),(p,x+(-1)**w,y+1)])
+            moves.extend([(x,y,x+(-1)**w,y),(x,y,x+(-1)**w,y-1),(x,y,x+(-1)**w,y+1)])
             if x==1 or x==6:
-                moves.append((p,x+2*(-1)**w,y))
+                moves.append((x,y,x+2*(-1)**w,y))
         if type=='F' or type=='D':
-            for mon_zip in [zip([p]*8,range(x+1,8),range(y+1,8)),zip([p]*8,range(x+1,8),range(y-1,-1,-1)),zip([p]*8,range(x-1,-1,-1),range(y+1,8)),zip([p]*8,range(x-1,-1,-1),range(y-1,-1,-1))]:
+            for mon_zip in [zip([x]*8,[y]*8,range(x+1,8),range(y+1,8)),zip([x]*8,[y]*8,range(x+1,8),range(y-1,-1,-1)),zip([x]*8,[y]*8,range(x-1,-1,-1),range(y+1,8)),zip([x]*8,[y]*8,range(x-1,-1,-1),range(y-1,-1,-1))]:
                 moves.extend(mon_zip)
         if type=='T' or type=='D':
-            for mon_zip in [zip([p]*8,range(x-1,-1,-1),[y]*abs(x)),zip([p]*8,range(x+1,8),[y]*np.abs(8-x)),zip([p]*8,[x]*abs(y),range(y-1,-1,-1)),zip([p]*8,[x]*np.abs(8-y),range(y+1,8))]:
+            for mon_zip in [zip([x]*8,[y]*8,range(x-1,-1,-1),[y]*abs(x)),zip([x]*8,[y]*8,range(x+1,8),[y]*np.abs(8-x)),zip([x]*8,[y]*8,[x]*abs(y),range(y-1,-1,-1)),zip([x]*8,[y]*8,[x]*np.abs(8-y),range(y+1,8))]:
                 moves.extend(mon_zip)
         return moves
 
@@ -161,11 +159,11 @@ class Game():
 
     def promouvoir_piece(self,pp,nx,ny):
         self.pieces[pp].promouvoir()
-        self.cases[nx][ny]=self.pieces[pp].numtype
+        self.cases[nx][ny]= 5 if self.pieces[pp].coul=='N' else -5
 
     def depromouvoir_piece(self,pp,x,y):
         self.pieces[pp].depromouvoir()
-        self.cases[x][y]=self.pieces[pp].numtype
+        self.cases[x][y]= 6 if self.pieces[pp].coul=='N' else -6
 
     def canmove(self,x,y,nx,ny):
         if (self.cases[x][y]==0):
@@ -262,32 +260,31 @@ class Game():
 
 
     def checkmate(self):
-        for (p,nx,ny) in self.get_all_reasonable_moves():
-            if(self.canmove(self.pieces[p].x,self.pieces[p].y,nx,ny)[0]):
+        for (x,y,nx,ny) in self.get_all_reasonable_moves():
+            if(self.canmove(x,y,nx,ny)[0]):
                 return False
         return True
 
-    def move(self,p,nx,ny):
-        camarche,ind_p,pp = self.canmove(self.pieces[p].x,self.pieces[p].y,nx,ny)
+    def move(self,x,y,nx,ny):
+        camarche,ind_p,pp = self.canmove(x,y,nx,ny)
         if camarche:
-            x,y=self.pieces[p].x,self.pieces[p].y
+            p=piece_occupante(self.pieces,x,y)
             self.pieces[p].move(nx,ny)
             if ind_p !=-1:
                 self.piocher_piece(ind_p)
+            self.cases[nx][ny]=self.cases[x][y]
+            self.cases[x][y]=0
             if pp:
                 self.promouvoir_piece(p,nx,ny)
-            self.cases[nx][ny]=self.pieces[p].numtype
-            self.cases[x][y]=0
             self.swap()
             return True
         else:
             return False
 
-    def scoreklayer(self,p1,nx1,ny1,k):
-        can,ind_p,pp=self.canmove(self.pieces[p1].x,self.pieces[p1].y,nx1,ny1)
-
-        piece=self.pieces[p1]
-        type,x,y,coul=piece.type,piece.x,piece.y,piece.coul
+    def scoreklayer(self,x,y,nx1,ny1,k):
+        can,ind_p,pp=self.canmove(x,y,nx1,ny1)
+        
+        type,coul=num2type[abs(self.cases[x][y])-1],'N' if self.cases[x][y]>0 else 'B'
         score=0
 
         if pp:
@@ -298,9 +295,7 @@ class Game():
             dic_recompense={'P':10, 'C':40, 'F':35, 'T':50,'D':90}
             score+= dic_recompense[type_p]
 
-        #switch
-        #print(x,y,nx1,ny1)
-        assert(self.move(p1,nx1,ny1))
+        assert(self.move(x,y,nx1,ny1))
         check = self.checkcheck()
         mate=self.checkmate()
         if check:
@@ -312,17 +307,19 @@ class Game():
         if k!=1 and not mate:
             his_best_move=(-1,-1,-1)
             his_best_score=-np.Inf
-            for(p2,nx2,ny2) in self.get_all_reasonable_moves():
-                if self.canmove(self.pieces[p2].x,self.pieces[p2].y,nx2,ny2)[0]:
-                    ce_score=self.scoreklayer(p2,nx2,ny2,k-1)
+            for(x2,y2,nx2,ny2) in self.get_all_reasonable_moves():
+                if self.canmove(x2,y2,nx2,ny2)[0]:
+                    ce_score=self.scoreklayer(x2,y2,nx2,ny2,k-1)
                     if ce_score > his_best_score:
                         his_best_score = ce_score
-                        his_best_move=(p2,nx2,ny2)
+                        his_best_move=(x2,y2,nx2,ny2)
                     if ce_score>=10**10:
                         break
             score-=his_best_score
         #undoing
         self.swap()
+        p1=piece_occupante(self.pieces,nx1,ny1)
+        piece=self.pieces[p1]
         self.pieces[p1].move(x,y)
         self.cases[nx1][ny1]=0
         self.cases[x][y]=self.pieces[p1].numtype
@@ -349,17 +346,17 @@ class Game():
             return False
         score=-np.Inf
         p_dec,nx_dec,ny_dec=-1,-1,-1
-        for p,nx,ny in self.get_all_reasonable_moves():
-            if self.canmove(self.pieces[p].x,self.pieces[p].y,nx,ny)[0]:
-                ce_score=self.scoreklayer(p,nx,ny,level)
+        for x,y,nx,ny in self.get_all_reasonable_moves():
+            if self.canmove(x,y,nx,ny)[0]:
+                ce_score=self.scoreklayer(x,y,nx,ny,level)
                 if ce_score>score or (ce_score==score and randint(0,6)==0):
                      score=ce_score
-                     p_dec,nx_dec,ny_dec=p,nx,ny
-        assert(self.move(p_dec,nx_dec,ny_dec))
+                     x_dec,y_dec,nx_dec,ny_dec=x,y,nx,ny
+        assert(self.move(x_dec,y_dec,nx_dec,ny_dec))
         assert(score>-np.Inf)
         return(True)
 
-cases=[[0,0,0,4,5,0,0,0],[6]*8,[0]*8,[0]*8,[0]*8,[0]*8,[0]*8,[0,0,0,-4,-5,0,0,0]]
+cases=[[0,0,0,4,0,0,0,0],[0]*8,[0]*8,[0]*8,[0]*8,[0]*8,[0]*7+[-6],[0,0,0,-4,0,0,0,0]]
 # cases = [[0,0,0,4,0,0,-6,1],[0]*8,[0]*8,[5,0,0,0,0,0,0,0],[0]*8,[0]*8,[0]*8,[0,0,0,-4,0,0,0,0]]
 newgame=Game()
 still_can_play = True
