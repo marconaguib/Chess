@@ -5,6 +5,8 @@ lettres=['A','B','C','D','E','F','G','H']
 dic_lettres={'A':1,'B':2,'C':3,'D':4,'E':5,'F':6,'G':7,'H':8}
 
 type2num={'T':1,'C':2,'F':3,'R':4,'D':5,'P':6}
+num2type=['T','C','F','R','D','P']
+
 
 columns=["a8","b8","c8","d8","e8","f8","g8","h8",
         "a7","b7","c7","d7","e7","f7","g7","h7",
@@ -57,7 +59,6 @@ class Game():
     def __init__(self,cases=[[1,2,3,4,5,3,2,1],[6]*8,[0]*8,[0]*8,[0]*8,[0]*8,[-6]*8,[-1,-2,-3,-4,-5,-3,-2,-1]]):
         self.cases=cases
         self.pieces=[]
-        num2type=['T','C','F','R','D','P']
         for i in range(8):
             for j in range(8):
                 val = self.cases[i][j]
@@ -199,17 +200,16 @@ class Game():
         self.pieces[pp].depromouvoir()
         self.cases[x][y]=self.pieces[pp].numtype
 
-    def canmove(self,p,nx,ny):
+    def canmove(self,x,y,nx,ny):
+        if (self.cases[x][y]==0):
+            return (False,-1,False)
+        type,coul=num2type[abs(self.cases[x][y])-1],'N' if self.cases[x][y]>0 else 'B'
         lui=(-1)**(1-self.white)
         ind_p=-1
         if nx<0 or nx>7 or ny<0 or ny>7:
             return (False,-1,False)
         if (self.white and self.piece_occupante2(nx,ny)<0) or (not self.white and self.piece_occupante2(nx,ny)>0):
             return (False,-1,False)
-        piece=self.pieces[p]
-        if (piece.pioch):
-            return (False,-1,False)
-        type,x,y,coul=piece.type,piece.x,piece.y,piece.coul
         if type=='P':
             if coul=='N':
                 if nx<=x or abs(ny-y)>1 or (nx-x>2 and x==1) or (nx-x>1 and x>1):
@@ -277,33 +277,31 @@ class Game():
             ind_p=piece_occupante(self.pieces,nx,ny)
             if ind_p!=-1:
                 self.piocher_piece(ind_p)
-        self.pieces[p].move(nx,ny)
-        self.cases[nx][ny]=self.pieces[p].numtype
+        self.cases[nx][ny]=self.cases[x][y]
         self.cases[x][y]=0
         seraitcheck=0
         if(self.checkcheck()):
             seraitcheck=1
-        self.pieces[p].move(x,y)
+        self.cases[x][y]=self.cases[nx][ny]
         self.cases[nx][ny]=0
-        self.cases[x][y]=self.pieces[p].numtype
         if ind_p != -1:
             self.depiocher_piece(ind_p,nx,ny)
         if seraitcheck:
             return (False,-1,False)
         pion_promu=False
-        if self.pieces[p].type=='P' and (nx==7 or nx==0):
+        if type=='P' and (nx==7 or nx==0):
             pion_promu=True
         return (True,ind_p,pion_promu)
 
 
     def checkmate(self):
         for (p,nx,ny) in self.get_all_reasonable_moves():
-            if(self.canmove(p,nx,ny)[0]):
+            if(self.canmove(self.pieces[p].x,self.pieces[p].y,nx,ny)[0]):
                 return False
         return True
 
     def move(self,p,nx,ny):
-        camarche,ind_p,pp = self.canmove(p,nx,ny)
+        camarche,ind_p,pp = self.canmove(self.pieces[p].x,self.pieces[p].y,nx,ny)
         if camarche:
             x,y=self.pieces[p].x,self.pieces[p].y
             self.pieces[p].move(nx,ny)
@@ -319,7 +317,7 @@ class Game():
             return False
 
     def scoreklayer(self,p1,nx1,ny1,k):
-        can,ind_p,pp=self.canmove(p1,nx1,ny1)
+        can,ind_p,pp=self.canmove(self.pieces[p1].x,self.pieces[p1].y,nx1,ny1)
 
         piece=self.pieces[p1]
         type,x,y,coul=piece.type,piece.x,piece.y,piece.coul
@@ -347,7 +345,7 @@ class Game():
             his_best_move=(-1,-1,-1)
             his_best_score=-np.Inf
             for(p2,nx2,ny2) in self.get_all_reasonable_moves():
-                if self.canmove(p2,nx2,ny2)[0]:
+                if self.canmove(self.pieces[p2].x,self.pieces[p2].y,nx2,ny2)[0]:
                     ce_score=self.scoreklayer(p2,nx2,ny2,k-1)
                     if ce_score > his_best_score:
                         his_best_score = ce_score
@@ -384,7 +382,7 @@ class Game():
         score=-np.Inf
         p_dec,nx_dec,ny_dec=-1,-1,-1
         for p,nx,ny in self.get_all_reasonable_moves():
-            if self.canmove(p,nx,ny)[0]:
+            if self.canmove(self.pieces[p].x,self.pieces[p].y,nx,ny)[0]:
                 ce_score=self.scoreklayer(p,nx,ny,level)
                 if ce_score>score or (ce_score==score and randint(0,6)==0):
                      score=ce_score
@@ -395,11 +393,11 @@ class Game():
 
 cases=[[0,0,0,4,5,0,0,0],[6]*8,[0]*8,[0]*8,[0]*8,[0]*8,[0]*8,[0,0,0,-4,-5,0,0,0]]
 # cases = [[0,0,0,4,0,0,-6,1],[0]*8,[0]*8,[5,0,0,0,0,0,0,0],[0]*8,[0]*8,[0]*8,[0,0,0,-4,0,0,0,0]]
-newgame=Game(cases)
+newgame=Game()
 still_can_play = True
 while still_can_play:
     newgame.print_board()
-    still_can_play = newgame.makeamove(3)
+    still_can_play = newgame.makeamove(2)
     if not still_can_play:
         break
     newgame.print_board()
