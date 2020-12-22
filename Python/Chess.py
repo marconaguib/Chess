@@ -11,6 +11,13 @@ class Game():
                     continue
                 c = 'B' if (val<0) else 'N'
         self.white = white
+        self.rois=[(0,3),(7,3)]
+    
+    def track_rois(self,x,y):
+        if(self.cases[x][y]==4):
+            self.rois[0]=x,y
+        if(self.cases[x][y]==-4):
+            self.rois[1]=x,y
         
     def swap(self):
         self.white = 1-self.white
@@ -63,14 +70,7 @@ class Game():
     def checkcheck(self):
         lui=(-1)**(1-self.white)
         mon_roi=-4*lui
-        for i in range(8):
-            for j in range(8):
-                if self.cases[i][j]==mon_roi:
-                    x,y=i,j
-                    break
-            else:
-                continue
-            break
+        x,y=self.rois[self.white]
         if self.piece_occupante(x+(-1)**self.white,y-1)==6*lui or self.piece_occupante(x+(-1)**self.white,y+1)==6*lui:
                 return True
         for (cx,cy) in [(x-1,y-1),(x-1,y),(x-1,y+1),(x,y-1),(x,y+1),(x+1,y-1),(x+1,y),(x+1,y+1)]:
@@ -163,11 +163,13 @@ class Game():
             type_pioche=self.piece_occupante(nx,ny)
         self.cases[nx][ny]=self.cases[x][y]
         self.cases[x][y]=0
+        self.track_rois(nx,ny)
         seraitcheck=0
         if(self.checkcheck()):
             seraitcheck=1
         self.cases[x][y]=self.cases[nx][ny]
         self.cases[nx][ny]=0
+        self.track_rois(x,y)
         if type_pioche != 0:
             self.cases[nx][ny]=type_pioche
         if seraitcheck:
@@ -182,15 +184,12 @@ class Game():
         return True
 
     def move(self,x,y,nx,ny):
-        if not self.canmove(x,y,nx,ny):
-            return False
         self.cases[nx][ny]=self.cases[x][y]
         self.cases[x][y]=0
         if (abs(self.cases[nx][ny])==6 and (nx==7 or nx==0)):
             self.cases[nx][ny]= 5 if self.cases[nx][ny]==6 else -5
-        self.swap()
-        return True
-        
+        self.track_rois(nx,ny)
+        self.swap()        
 
     def scoreklayer(self,x,y,nx1,ny1,k,largeur):
         type_pioche,pp = self.cases[nx1][ny1],(abs(self.cases[x][y])==6 and (nx1==7 or nx1==0))
@@ -200,8 +199,9 @@ class Game():
         if type_pioche != 0:
             dic_recompense={6:10, 2:40, 3:35, 1:50,5:90}
             score+= dic_recompense[abs(type_pioche)]
-
-        assert(self.move(x,y,nx1,ny1))
+        
+        assert(self.canmove(x,y,nx1,ny1))
+        self.move(x,y,nx1,ny1)
         check = self.checkcheck()
         mate=self.checkmate()
         if check:
@@ -232,6 +232,7 @@ class Game():
         self.cases[nx1][ny1]=type_pioche
         if pp:
             self.cases[x][y]= 6 if self.cases[x][y]==5 else -6
+        self.track_rois(x,y)
         #switch back
         return score
 
@@ -259,7 +260,8 @@ class Game():
                 moves.append((x2,y2,nx2,ny2))
                 scores.append(self.scoreklayer(x2,y2,nx2,ny2,level,width))
         x,y,nx,ny=moves[np.argmax(scores)]
-        assert(self.move(x,y,nx,ny))
+        assert(self.canmove(x,y,nx,ny))
+        self.move(x,y,nx,ny)
         return True
 
 cases=[[0,0,0,4,0,0,0,0],[0]*8,[0]*8,[0]*8,[0]*8,[0]*8,[0]*7+[-6],[0,0,0,-4,0,0,0,0]]
