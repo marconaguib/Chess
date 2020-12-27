@@ -1,5 +1,75 @@
 import numpy as np
 import time
+
+columns=["a8","b8","c8","d8","e8","f8","g8","h8",
+        "a7","b7","c7","d7","e7","f7","g7","h7",
+        "a6","b6","c6","d6","e6","f6","g6","h6",
+        "a5","b5","c5","d5","e5","f5","g5","h5",
+        "a4","b4","c4","d4","e4","f4","g4","h4",
+        "a3","b3","c3","d3","e3","f3","g3","h3",
+        "a2","b2","c2","d2","e2","f2","g2","h2",
+        "a1","b1","c1","d1","e1","f1","g1","h1"]
+pieces=['R','N','B','K','Q']
+
+        
+def read_move(board):
+    joueur = -1 if board[64] else 1
+    if checkmate(board):
+        if checkcheck(board):
+            if board[64] :
+                print("Checkmate, black wins.")
+            else:
+                print("Checkmate, white wins.")
+            return False
+        if board[64] :
+            print("Draw, white cannot move.")
+        else:
+            print("Draw, black cannot move.")
+        return False
+        
+    joue=False
+    while (not joue):
+        entry=input("Your move? ")
+        if len(entry)<5 and len(entry)>1:
+            entry=entry.replace('+','').replace('x','').replace('#','.')
+            if entry[-2:] in columns:
+                dest=columns.index(entry[-2:])  
+            else:
+                print('Non-existing destination: '+entry[-2:])
+                continue
+            nx,ny=dest//8,dest%8
+            entry=entry[:-2]
+            if len(entry)==0 or entry[0].islower():
+                type=6*joueur
+            else:
+                type=(pieces.index(entry[0])+1)*joueur
+            entry=entry[1:]
+            if(len(entry)>0):
+                if entry.isdigit():
+                    for (i,p) in enumerate(board[(8-int(entry))*8:(8-int(entry)+1)*8]):
+                        if abs(p)==type and canmove(board,i//8,i%8,nx,ny) :
+                            joue=True
+                            move(board,i//8,i%8,nx,ny)
+                            break
+                else :
+                    lettres=['a','b','c','d','e','f','g','h']
+                    for (i,p) in enumerate(board):
+                        if p==type and canmove(board,i//8,i%8,nx,ny) and i%8==lettres.index(entry[0]):
+                            joue=True
+                            move(board,i//8,i%8,nx,ny)
+                            break
+                    
+            else:
+                for (i,p) in enumerate(board):
+                    if p==type and canmove(board,i//8,i%8,nx,ny):
+                        joue=True
+                        move(board,i//8,i%8,nx,ny)
+                        break
+            if not joue:
+                print("Illegal move.")
+        else:
+            print("Not a move.")
+    return True
     
 def swap(board):
     board[64] = 1-board[64]
@@ -184,7 +254,7 @@ def scoreklayer(board,x,y,nx1,ny1,k,largeur):
         dic_recompense={6:10, 2:40, 3:35, 1:50,5:90}
         score+= dic_recompense[abs(type_pioche)]
     
-    assert(canmove(board,x,y,nx1,ny1))
+    #assert(canmove(board,x,y,nx1,ny1))
     move(board,x,y,nx1,ny1)
     check = checkcheck(board)
     mate=checkmate(board)
@@ -220,7 +290,7 @@ def scoreklayer(board,x,y,nx1,ny1,k,largeur):
     return score
 
 
-def makeamove(board,level,width):
+def makeamove(board,level=3,width=10):
     if checkmate(board):
         if checkcheck(board):
             if board[64] :
@@ -243,20 +313,27 @@ def makeamove(board,level,width):
             moves.append((x2,y2,nx2,ny2))
             scores.append(scoreklayer(board,x2,y2,nx2,ny2,level,width))
     x,y,nx,ny=moves[np.argmax(scores)]
-    assert(canmove(board,x,y,nx,ny))
+    #assert(canmove(board,x,y,nx,ny))
+    output='' if abs(board[x*8+y])==6 else pieces[abs(board[x*8+y])-1]
+    if board[nx*8+ny]!=0:
+        output+='x'
+    output+=columns[nx*8+ny]
     move(board,x,y,nx,ny)
+    if checkcheck(board):
+        output+='+'
+    if checkmate(board):
+        output+='#'
+    print(output)
     return True
 
-board=[1,2,3,4,5,3,2,1]+[6]*8+[0]*32+[-6]*8+[-1,-2,-3,-4,-5,-3,-2,-1]+[1]
+board=[1,2,3,5,4,3,2,1]+[6]*8+[0]*32+[-6]*8+[-1,-2,-3,-5,-4,-3,-2,-1]+[1]
 still_can_play = True
-while still_can_play:
+p=1
+while True:
     print_board(board)
     start=time.time()
-    still_can_play = makeamove(board,3,100)
-    end=time.time()
-    print(end-start)
-    if not still_can_play:
+    if not (makeamove(board) if (p:=1-p) else read_move(board)):
         break
-    print_board(board)
-    still_can_play = makeamove(board,2,10)
+    end=time.time()
+    #print(end-start)
     
